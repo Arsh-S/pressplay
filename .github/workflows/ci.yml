@@ -18,6 +18,6 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pressplay/core build
       - run: pnpm -r typecheck
       - run: pnpm -r test
-      - run: pnpm -r build
