@@ -13,5 +13,6 @@ screenshots/
 .env.*
 auth.json
 
+*.tsbuildinfo
 .DS_Store
 *.log
