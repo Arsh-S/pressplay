@@ -1,0 +1,17 @@
+{
+  "name": "pressplay",
+  "private": true,
+  "description": "Auto-generated demo videos for every pull request",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

@@ -1,0 +1,33 @@
+name: 'PRessPlay'
+description: 'Auto-generate demo videos of frontend changes for every PR'
+branding:
+  icon: 'video'
+  color: 'purple'
+
+inputs:
+  preview-url:
+    description: 'URL of the preview deployment to record'
+    required: true
+  llm-api-key:
+    description: 'API key for LLM provider (Anthropic or OpenAI)'
+    required: true
+  llm-provider:
+    description: 'LLM provider: anthropic or openai'
+    default: 'anthropic'
+  config-path:
+    description: 'Path to pressplay.config.ts'
+    default: 'pressplay.config.ts'
+
+outputs:
+  comment-url:
+    description: 'URL of the PR comment with the demo video'
+  video-path:
+    description: 'Path to the generated MP4 video'
+  gif-path:
+    description: 'Path to the generated GIF'
+  fallback:
+    description: 'Fallback mode used (none, screenshots-only)'
+
+runs:
+  using: 'node20'
+  main: 'packages/action/dist/index.js'

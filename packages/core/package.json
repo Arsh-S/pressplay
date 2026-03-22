@@ -1,0 +1,35 @@
+{
+  "name": "@pressplay/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@actions/artifact": "^2.2.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@octokit/rest": "^21.0.0",
+    "minimatch": "^10.0.0",
+    "openai": "^4.80.0",
+    "playwright": "^1.50.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.438",
+    "@remotion/renderer": "^4.0.438",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.438",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

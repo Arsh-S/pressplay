@@ -1,0 +1,17 @@
+node_modules/
+dist/
+!packages/action/dist/
+
+recordings/
+screenshots/
+*.webm
+*.mp4
+*.gif
+*-palette.png
+
+.env
+.env.*
+auth.json
+
+.DS_Store
+*.log
