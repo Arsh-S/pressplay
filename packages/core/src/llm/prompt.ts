@@ -1,4 +1,5 @@
 import type { DiffAnalysis } from '../types.js';
+import type { DOMSnapshot } from '../recorder/inspector.js';
 
 export interface PromptPair {
   system: string;
@@ -9,12 +10,13 @@ export function buildPrompt(
   diff: DiffAnalysis,
   previewUrl: string,
   appHint: string,
+  domSnapshot?: DOMSnapshot,
 ): PromptPair {
   const system = `You are a frontend QA engineer creating a Playwright demo script to showcase UI changes from a pull request. The script runs against a live preview deployment and records a video.
 
-GOAL: Generate a short, focused demo that clearly shows what changed. Think of it as a Loom recording a developer would make to show their PR — navigate to the right page, interact with the new/changed UI elements, and make the changes obvious.
+GOAL: Generate a short, focused demo that clearly shows what changed. Think of it as a Loom recording a developer would make to show their PR — navigate to the right page, interact with the new/changed UI elements, and make the changes obvious to a reviewer.
 
-OUTPUT FORMAT: A JSON array of step objects. Output ONLY the JSON array, no markdown fences, no explanation.
+OUTPUT FORMAT: A JSON array of step objects. Output ONLY the JSON array — no markdown fences, no explanation, no commentary.
 
 AVAILABLE ACTIONS:
 - { "action": "navigate", "url": "...", "note": "..." }
@@ -27,59 +29,75 @@ AVAILABLE ACTIONS:
 - { "action": "screenshot", "name": "...", "note": "..." }
 - { "action": "press", "key": "Enter", "note": "..." }
 
-SELECTOR RULES (critical for reliability):
-1. BEST: data-testid attributes — e.g. [data-testid="submit-btn"]
-2. GOOD: Text selectors — e.g. text=Submit, text=Search Unsplash
-3. GOOD: Role selectors — e.g. role=button[name="Submit"]
-4. OK: Placeholder/label — e.g. input[placeholder="Search..."]
-5. LAST RESORT: CSS class selectors — e.g. .btn-primary
+SELECTOR RULES — CRITICAL FOR RELIABILITY:
+- You MUST use selectors from the DOM snapshot when one is provided. Do NOT guess selectors.
+- Prefer exact text matches: text=Search Unsplash, text=Add Item
+- For buttons with exact text: text=Submit (matches exact text)
+- For inputs: use placeholder — input[placeholder="Search photos..."]
+- For test IDs: [data-testid="submit-btn"]
+- ALWAYS scope selectors inside dialogs/modals: [role="dialog"] >> text=Cancel
+- When clicking one of multiple similar elements, use nth: [role="dialog"] >> .grid img >> nth=0
+- For image buttons that have overlay elements, use { force: true } is NOT available — instead click the img element directly or use the parent button with a more specific selector
+- NEVER use bare class selectors like .grid button — too ambiguous, matches wrong elements
 
-CHAINING: To scope selectors within a parent, use >> syntax:
-- [role="dialog"] >> text=Submit (finds "Submit" inside a dialog)
-- .modal >> input[placeholder="Search..."]
+CHAINING with >>:
+- [role="dialog"] >> text=Submit — text inside a dialog
+- [role="dialog"] >> input[placeholder="Search photos..."] — input inside dialog
+- [role="dialog"] >> img >> nth=0 — first image in dialog
 
-SELECTING NTH ELEMENT: When multiple elements match:
-- .grid button >> nth=0 (first button in grid)
-- .grid button >> nth=1 (second button)
+TIMING:
+- Total demo: under 15-20 seconds of interaction
+- Use "wait" ONLY after API calls (1500ms) or animations (500ms)
+- Do NOT add waitForSelector before every action — only after navigation or waiting for async content
+- Do NOT add excessive screenshots — max 5-6 total at key moments
+- Start with navigate, then go straight to interacting
 
-TIMING RULES:
-- Keep the total demo under 15-20 seconds of interaction
-- Use "wait" sparingly — only after actions that trigger API calls or animations
-- Use 500ms waits for UI transitions, 1500ms for API responses
-- Do NOT add waitForSelector before every click — only after navigation or when waiting for async content (modals, API results)
-- Do NOT add excessive screenshot steps — max 5-6 total, at key moments
+DEMO FLOW:
+1. Navigate to the preview URL (the first step is ALWAYS navigate to the preview URL provided)
+2. Interact with NEW or CHANGED elements from the diff
+3. If a modal/dialog is added, open it, use it, confirm/close it
+4. After adding content (images, items), scroll to show the result
+5. End with a final screenshot
 
-DEMO STRUCTURE:
-1. Navigate to the most relevant page showing the changes
-2. Interact with the NEW or CHANGED elements (not existing unchanged UI)
-3. Show the result of the interaction (scroll to reveal, wait for response)
-4. If the change adds a modal/dialog, open it, interact with it, close it
-5. After important changes render (images load, lists update), scroll to show them
-6. End with a screenshot showing the final state
+AVOID:
+- Don't test error states — show the happy path only
+- Don't interact with unchanged UI
+- Don't add login steps unless app hints say to
+- Don't exceed 20 steps
+- Don't use fragile CSS selectors — always prefer text= or role= or data-testid`;
 
-WHAT TO AVOID:
-- Don't try to test error states or edge cases — show the happy path
-- Don't interact with UI that hasn't changed in this PR
-- Don't add steps for login/auth unless the app hints say to
-- Don't generate more than 25 steps — keep it focused
-- Don't use fragile selectors like div > div > span:nth-child(3)`;
+  const userParts: string[] = [];
 
-  const userParts = [
-    `Preview URL: ${previewUrl}`,
+  if (appHint) {
+    userParts.push(`APP HINTS:\n${appHint}`, '');
+  }
+
+  userParts.push(`PREVIEW URL: ${previewUrl}`, '');
+
+  // DOM snapshot is the most valuable context — put it before the diff
+  if (domSnapshot) {
+    userParts.push(
+      `LIVE DOM SNAPSHOT (interactive elements on the page — USE THESE SELECTORS):`,
+      `Page title: ${domSnapshot.title}`,
+      `URL: ${domSnapshot.url}`,
+      '',
+      domSnapshot.elements,
+      '',
+      '---',
+      '',
+    );
+  }
+
+  userParts.push(
+    `DIFF SUMMARY:\n${diff.summary}`,
     '',
-    `Diff Summary:\n${diff.summary}`,
+    `AFFECTED ROUTES: ${diff.affectedRoutes.join(', ') || 'none mapped'}`,
     '',
-    `Affected Routes: ${diff.affectedRoutes.join(', ') || 'none mapped'}`,
-    '',
-    'Changed Files:',
+    'CHANGED FILES:',
     ...diff.changedFiles.map(
       (f) => `--- ${f.path} (${f.changeType}, ${f.category}) ---\n${f.diff}`,
     ),
-  ];
-
-  if (appHint) {
-    userParts.unshift(`App Hints: ${appHint}`, '');
-  }
+  );
 
   return { system, user: userParts.join('\n') };
 }

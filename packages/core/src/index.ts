@@ -1,5 +1,6 @@
 import { analyzeDiff } from './diff/analyzer.js';
 import { generateWithRetry } from './llm/retry.js';
+import { inspectPage } from './recorder/inspector.js';
 import { recordVideo } from './recorder/video.js';
 import { captureScreenshots } from './recorder/fallback.js';
 import { convertVideo } from './postprod/ffmpeg.js';
@@ -37,7 +38,16 @@ export async function run(options: RunOptions): Promise<PipelineResult> {
     };
   }
 
-  // Stage 2: LLM script generation
+  // Stage 1.5: DOM inspection — navigate to the preview URL and capture
+  // interactive elements so the LLM can use real selectors
+  let domSnapshot;
+  try {
+    domSnapshot = await inspectPage(previewUrl, config.recording);
+  } catch {
+    // Non-fatal — LLM will fall back to guessing from the diff
+  }
+
+  // Stage 2: LLM script generation (with DOM snapshot for selector accuracy)
   let steps;
   try {
     const result = await generateWithRetry({
@@ -51,11 +61,11 @@ export async function run(options: RunOptions): Promise<PipelineResult> {
         temperature: config.llm.temperature,
       },
       maxRetries: config.llm.maxRetries,
+      domSnapshot,
     });
     steps = result.steps;
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    // Fallback to screenshots
     const recording = await captureScreenshots(
       diff.affectedRoutes.length > 0 ? diff.affectedRoutes : ['/'],
       previewUrl,
@@ -77,7 +87,6 @@ export async function run(options: RunOptions): Promise<PipelineResult> {
     recording = await recordVideo(steps, previewUrl, config.recording);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    // Fallback to screenshots
     const screenshotResult = await captureScreenshots(
       diff.affectedRoutes.length > 0 ? diff.affectedRoutes : ['/'],
       previewUrl,

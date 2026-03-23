@@ -1,4 +1,5 @@
 import type { DiffAnalysis, Step } from '../types.js';
+import type { DOMSnapshot } from '../recorder/inspector.js';
 import { buildPrompt } from './prompt.js';
 import { generateSteps, type LLMClientConfig } from './client.js';
 
@@ -8,6 +9,7 @@ export interface RetryContext {
   appHint: string;
   llmConfig: LLMClientConfig;
   maxRetries: number;
+  domSnapshot?: DOMSnapshot;
 }
 
 export interface RetryResult {
@@ -21,10 +23,10 @@ export async function generateWithRetry(ctx: RetryContext): Promise<RetryResult>
 
   for (let attempt = 1; attempt <= ctx.maxRetries + 1; attempt++) {
     try {
-      const prompt = buildPrompt(ctx.diff, ctx.previewUrl, ctx.appHint);
+      const prompt = buildPrompt(ctx.diff, ctx.previewUrl, ctx.appHint, ctx.domSnapshot);
 
       if (errors.length > 0) {
-        prompt.user += `\n\nPREVIOUS ATTEMPT FAILED:\n${errors[errors.length - 1]}\n\nPlease generate a corrected script that avoids this error. Use simpler, more robust selectors.`;
+        prompt.user += `\n\nPREVIOUS ATTEMPT FAILED:\n${errors[errors.length - 1]}\n\nGenerate a corrected script. Use ONLY selectors from the DOM snapshot. Prefer text= selectors scoped inside [role="dialog"] for modal content.`;
       }
 
       const steps = await generateSteps(prompt, ctx.llmConfig);

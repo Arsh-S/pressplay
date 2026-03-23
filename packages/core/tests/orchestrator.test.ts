@@ -6,6 +6,9 @@ vi.mock('../src/diff/analyzer.js', () => ({
 vi.mock('../src/llm/retry.js', () => ({
   generateWithRetry: vi.fn(),
 }));
+vi.mock('../src/recorder/inspector.js', () => ({
+  inspectPage: vi.fn().mockResolvedValue({ url: 'https://preview.example.com', title: 'Test', elements: 'button "Submit"' }),
+}));
 vi.mock('../src/recorder/video.js', () => ({
   recordVideo: vi.fn(),
 }));
