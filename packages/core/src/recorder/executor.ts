@@ -93,7 +93,7 @@ async function moveToElement(page: Page, selector: string): Promise<void> {
   }
 }
 
-async function ensureCursor(page: Page): Promise<void> {
+export async function ensureCursor(page: Page): Promise<void> {
   try {
     await page.evaluate(CURSOR_SCRIPT);
   } catch {

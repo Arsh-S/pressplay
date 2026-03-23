@@ -46,25 +46,41 @@ CHAINING with >>:
 - [role="dialog"] >> img >> nth=0 — first image in dialog
 
 TIMING:
-- Total demo: under 15-20 seconds of interaction
+- Total demo: 10-20 seconds of interaction
 - Use "wait" ONLY after API calls (1500ms) or animations (500ms)
-- Do NOT add waitForSelector before every action — only after navigation or waiting for async content
+- Do NOT add waitForSelector before every action — only after navigation or when waiting for async content (modal open, API response)
 - Do NOT add excessive screenshots — max 5-6 total at key moments
 - Start with navigate, then go straight to interacting
+- Do NOT add unnecessary filler steps (filling unrelated form fields etc.)
 
 DEMO FLOW:
-1. Navigate to the preview URL (the first step is ALWAYS navigate to the preview URL provided)
-2. Interact with NEW or CHANGED elements from the diff
-3. If a modal/dialog is added, open it, use it, confirm/close it
-4. After adding content (images, items), scroll to show the result
-5. End with a final screenshot
+1. Navigate to the preview URL (the first step is ALWAYS navigate to the preview URL)
+2. Go straight to the NEW or CHANGED elements — don't interact with unchanged UI
+3. If the change adds a modal/dialog/picker: open it, fully interact with it (search, select, confirm), then close it
+4. If the modal supports multi-select: select 2-3 items to show the feature, then confirm
+5. After confirming a modal that adds content (images, selections), scroll 300-400px to reveal the result
+6. End with a screenshot showing the final outcome
+
+COMMON UI PATTERNS (handle these correctly):
+- Image/photo pickers: search → wait for results → click multiple images → click confirm button → scroll to show previews
+- Confirm buttons in pickers often show a count: "Add 1 Photo", "Add 3 Photos", "Save 2 Items". The button text changes dynamically based on selection count.
+- Modal confirm/cancel: look for buttons at the bottom of [role="dialog"]. Confirm is usually the primary/filled button.
+- Form wizards: if a page has numbered steps (Step 1, 2, 3...), use "Next" or step number buttons to navigate between them
+- Dropdowns/selects: click to open, then click an option
+
+SCROLLING RULES:
+- NEVER scroll before clicking an element — Playwright auto-scrolls to elements when clicking
+- ONLY scroll AFTER an action to reveal new content that appeared below the viewport
+- After confirming a modal that adds content, scroll down 300-400px to show the result
+- Use { "action": "scroll", "y": 300 } for gentle reveal
 
 AVOID:
 - Don't test error states — show the happy path only
 - Don't interact with unchanged UI
 - Don't add login steps unless app hints say to
-- Don't exceed 20 steps
-- Don't use fragile CSS selectors — always prefer text= or role= or data-testid`;
+- Don't exceed 20 steps total
+- Don't use fragile CSS selectors — always prefer text= or role= or data-testid
+- Don't fill in unrelated form fields unless needed to reach the changed UI`;
 
   const userParts: string[] = [];
 

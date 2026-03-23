@@ -43,7 +43,10 @@ const SNAPSHOT_SCRIPT = `
     const rect = el.getBoundingClientRect();
     // Skip invisible/off-screen elements
     if (rect.width === 0 || rect.height === 0) continue;
-    if (rect.top > window.innerHeight + 500) continue;
+    if (rect.top > window.innerHeight * 2) continue;
+    // Check computed visibility
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue;
 
     const tag = el.tagName.toLowerCase();
     const role = el.getAttribute('role') || '';
@@ -68,12 +71,18 @@ const SNAPSHOT_SCRIPT = `
     desc += disabled;
     if (selector) desc += ' → ' + selector;
     if (context) desc += ' (inside ' + context + ')';
+    // Mark if element is in viewport or below
+    if (rect.top > window.innerHeight) desc += ' [below viewport — Playwright auto-scrolls to it]';
 
     results.push(desc);
   }
 
-  // Also get headings for page structure context
+  // Visible headings for page structure context
   for (const h of document.querySelectorAll('h1, h2, h3')) {
+    const rect = h.getBoundingClientRect();
+    const style = window.getComputedStyle(h);
+    if (rect.width === 0 || rect.height === 0) continue;
+    if (style.display === 'none' || style.visibility === 'hidden') continue;
     const text = h.textContent?.trim();
     if (text) results.push(h.tagName.toLowerCase() + ' "' + text.slice(0, 80) + '"');
   }
