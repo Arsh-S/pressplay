@@ -16,3 +16,9 @@ auth.json
 *.tsbuildinfo
 .DS_Store
 *.log
+
+# Web app
+.next/
+*.db
+*.db-wal
+*.db-shm
