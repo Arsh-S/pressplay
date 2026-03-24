@@ -5,7 +5,7 @@ describe('parseConfig', () => {
   it('accepts minimal valid config', () => {
     const config = parseConfig({});
     expect(config.diff.maxTokens).toBe(8000);
-    expect(config.recording.viewport.width).toBe(1280);
+    expect(config.recording.viewport.width).toBe(1920);
     expect(config.llm.provider).toBe('anthropic');
   });
 
@@ -16,7 +16,7 @@ describe('parseConfig', () => {
     });
     expect(config.diff.maxTokens).toBe(4000);
     expect(config.llm.provider).toBe('openai');
-    expect(config.recording.viewport.width).toBe(1280);
+    expect(config.recording.viewport.width).toBe(1920);
   });
 
   it('rejects invalid provider', () => {
