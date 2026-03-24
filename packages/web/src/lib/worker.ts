@@ -1,16 +1,17 @@
 import { db } from './db';
 import { jobs, repos, repoSettings, installations } from './schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { run, parseConfig } from '@pressplay/core';
 import type { PipelineResult } from '@pressplay/core';
 import { getInstallationOctokit } from './github';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const WORK_DIR = process.env.WORK_DIR || '/tmp/pressplay-jobs';
 
 export async function processNextJob(): Promise<boolean> {
-  // Claim the next pending job atomically
+  // Atomic claim: find a pending job and mark it running in one step
+  // This prevents two worker polls from grabbing the same job
   const pendingJobs = await db
     .select()
     .from(jobs)
@@ -21,11 +22,14 @@ export async function processNextJob(): Promise<boolean> {
 
   const job = pendingJobs[0];
 
-  // Mark as running
-  await db
+  // Atomic claim — only update if still pending (another worker might have claimed it)
+  const claimed = await db
     .update(jobs)
     .set({ status: 'running', startedAt: new Date() })
-    .where(eq(jobs.id, job.id));
+    .where(and(eq(jobs.id, job.id), eq(jobs.status, 'pending')))
+    .returning();
+
+  if (claimed.length === 0) return false; // Another worker got it first
 
   try {
     await executeJob(job);
@@ -102,6 +106,10 @@ async function executeJob(job: Job) {
     ? (JSON.parse(settings.configJson) as Record<string, unknown>)
     : {};
   const config = parseConfig({
+    diff: {
+      // Broad pattern — match frontend files anywhere in the repo
+      include: ['**/*.{tsx,jsx,vue,svelte,css,scss,html}'],
+    },
     ...configOverrides,
     publish: { comment: false, artifact: false }, // We handle publishing ourselves
   });
@@ -149,14 +157,80 @@ async function executeJob(job: Job) {
     }
 
     await db.update(jobs).set(updateData).where(eq(jobs.id, job.id));
+    console.log('Job updated in DB. Video:', updateData.videoUrl, 'Steps:', result.steps.length);
 
     // Post PR comment with the video
-    if (result.postProd?.gifPath || result.postProd?.mp4Path) {
+    try {
+      console.log('Posting PR comment to', owner + '/' + repoName, '#' + job.prNumber);
       await postPRComment(octokit, owner, repoName, job, result);
+      console.log('PR comment posted successfully');
+    } catch (commentErr) {
+      console.error('Failed to post PR comment:', commentErr);
     }
   } finally {
     process.chdir(originalCwd);
   }
+}
+
+/**
+ * Upload video/gif as GitHub release assets so they're publicly accessible.
+ * Creates or reuses a "pressplay-assets" release tag on the repo.
+ */
+async function uploadVideoAssets(
+  octokit: Awaited<ReturnType<typeof getInstallationOctokit>>,
+  owner: string,
+  repoName: string,
+  jobId: string,
+  result: PipelineResult,
+): Promise<{ mp4Url: string | null; gifUrl: string | null }> {
+  const urls = { mp4Url: null as string | null, gifUrl: null as string | null };
+  const tag = 'pressplay-assets';
+
+  try {
+    // Get or create the release
+    let releaseId: number;
+    try {
+      const { data } = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
+        owner, repo: repoName, tag,
+      });
+      releaseId = data.id;
+    } catch {
+      const { data } = await octokit.request('POST /repos/{owner}/{repo}/releases', {
+        owner, repo: repoName, tag_name: tag,
+        name: 'PRessPlay Demo Assets',
+        body: 'Auto-generated demo videos by PRessPlay. Do not delete this release.',
+        draft: false,
+        prerelease: true,
+      });
+      releaseId = data.id;
+    }
+
+    // Upload MP4
+    if (result.postProd?.mp4Path) {
+      const fileData = readFileSync(result.postProd.mp4Path);
+      const { data } = await octokit.request('POST {url}', {
+        url: `https://uploads.github.com/repos/${owner}/${repoName}/releases/${releaseId}/assets?name=demo-${jobId.slice(0, 8)}.mp4`,
+        headers: { 'content-type': 'video/mp4', 'content-length': String(fileData.length) },
+        data: fileData,
+      });
+      urls.mp4Url = data.browser_download_url;
+    }
+
+    // Upload GIF
+    if (result.postProd?.gifPath) {
+      const fileData = readFileSync(result.postProd.gifPath);
+      const { data } = await octokit.request('POST {url}', {
+        url: `https://uploads.github.com/repos/${owner}/${repoName}/releases/${releaseId}/assets?name=demo-${jobId.slice(0, 8)}.gif`,
+        headers: { 'content-type': 'image/gif', 'content-length': String(fileData.length) },
+        data: fileData,
+      });
+      urls.gifUrl = data.browser_download_url;
+    }
+  } catch (err) {
+    console.error('Failed to upload video assets:', err);
+  }
+
+  return urls;
 }
 
 async function postPRComment(
@@ -168,13 +242,33 @@ async function postPRComment(
 ) {
   const marker = '<!-- pressplay-demo -->';
 
+  const logoUrl = 'https://raw.githubusercontent.com/Arsh-S/pressplay/main/public/images/PRessPlay_logo_transparent.png';
+
   const lines = [
     marker,
-    `## PRessPlay Demo — PR #${job.prNumber}`,
+    `<a href="https://github.com/Arsh-S/pressplay"><img src="${logoUrl}" alt="PRessPlay" width="200" /></a>`,
     '',
-    '> Automated demo of frontend changes',
+    `### Demo — PR #${job.prNumber}`,
     '',
   ];
+
+  // Try to upload video as a GitHub release asset and embed in comment
+  if (result.postProd?.mp4Path || result.postProd?.gifPath) {
+    try {
+      const urls = await uploadVideoAssets(octokit, owner, repoName, job.id, result);
+      if (urls.gifUrl) {
+        lines.push(`![Demo](${urls.gifUrl})`, '');
+      }
+      if (urls.mp4Url) {
+        lines.push(`📹 [Watch full video (MP4)](${urls.mp4Url})`, '');
+      }
+    } catch (uploadErr) {
+      console.error('Video upload failed (need Contents:Write permission on GitHub App):', uploadErr);
+      lines.push('> *Video was generated but could not be uploaded. Grant Contents:Write permission to the GitHub App to enable video embedding.*', '');
+    }
+  }
+
+  lines.push('> Automated demo of frontend changes', '');
 
   if (result.steps.length > 0) {
     lines.push('### What was demonstrated:', '');
