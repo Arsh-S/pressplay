@@ -11,18 +11,15 @@ export default function Home() {
           aria-hidden="true"
         />
 
-        <span className="font-mono text-[11px] font-medium text-indigo-500 uppercase tracking-widest mb-4">
+        <span className="text-indigo-500 font-mono text-[11px] font-medium tracking-[0.1em] uppercase mb-4">
           Automated PR Demo Videos
         </span>
 
-        <h1
-          className="relative text-4xl sm:text-5xl font-bold leading-tight mb-5 max-w-2xl"
-          style={{ letterSpacing: '-0.03em' }}
-        >
+        <h1 className="relative text-4xl md:text-5xl font-bold tracking-tight leading-[1.1] max-w-2xl mx-auto mb-5">
           Stop writing PR descriptions nobody reads
         </h1>
 
-        <p className="relative text-base sm:text-lg text-zinc-400 max-w-xl mb-8 leading-relaxed">
+        <p className="relative text-zinc-400 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
           PRessPlay auto-generates demo videos for every pull request. Reviewers
           see what changed in seconds, not minutes.
         </p>
@@ -30,13 +27,13 @@ export default function Home() {
         <div className="relative flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/dashboard"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
           >
             Get Started
           </Link>
           <a
             href="#demo"
-            className="border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="border border-zinc-800 text-zinc-400 hover:text-zinc-300 rounded-lg px-6 py-2.5 text-sm transition-colors"
           >
             View Demo
           </a>
@@ -44,7 +41,7 @@ export default function Home() {
       </section>
 
       {/* Terminal mockup */}
-      <section id="demo" className="px-6 pb-20 flex justify-center border-t border-zinc-800 pt-16">
+      <section id="demo" className="px-6 py-16 border-t border-zinc-800 flex justify-center">
         <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
           {/* Window chrome */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
@@ -58,8 +55,8 @@ export default function Home() {
               <span className="text-indigo-500">$</span>{' '}
               <span className="text-zinc-300">git push origin feat/new-dashboard</span>
             </p>
-            <p className="text-zinc-500">→ PR #42 opened</p>
-            <p className="text-zinc-500">→ PRessPlay recording...</p>
+            <p className="text-zinc-500">{'  '}→ PR #42 opened</p>
+            <p className="text-zinc-500">{'  '}→ PRessPlay recording...</p>
             <p>
               <span className="text-green-400">✓</span>{' '}
               <span className="text-zinc-300">Demo video posted to PR #42</span>
@@ -71,22 +68,21 @@ export default function Home() {
 
       {/* How it works */}
       <section className="px-6 py-20 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <h2
-              className="text-3xl font-bold mb-3"
-              style={{ letterSpacing: '-0.02em' }}
-            >
+            <span className="text-indigo-500 font-mono text-[11px] font-medium tracking-[0.1em] uppercase block mb-4">
               How it works
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Three steps. Zero config.
             </h2>
-            <p className="text-zinc-400 text-sm">Three steps. Zero config.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               {
                 num: '01',
-                title: 'Install the GitHub App',
+                title: 'Install GitHub App',
                 desc: 'Connect PRessPlay to your repositories in one click from the GitHub Marketplace.',
               },
               {
@@ -117,7 +113,7 @@ export default function Home() {
 
       {/* Feature grid */}
       <section className="px-6 py-20 border-t border-zinc-800">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {[
               {
@@ -158,10 +154,7 @@ export default function Home() {
 
       {/* CTA footer */}
       <section className="px-6 py-20 border-t border-zinc-800 text-center">
-        <h2
-          className="text-3xl font-bold mb-3"
-          style={{ letterSpacing: '-0.02em' }}
-        >
+        <h2 className="text-3xl font-bold tracking-tight mb-3">
           Ready to ship faster?
         </h2>
         <p className="text-zinc-400 text-sm mb-8">
@@ -169,7 +162,7 @@ export default function Home() {
         </p>
         <Link
           href="/dashboard"
-          className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-lg text-sm font-medium transition-colors"
+          className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
         >
           Get Started
         </Link>
