@@ -67,6 +67,8 @@ COMMON UI PATTERNS (handle these correctly):
 - Modal confirm/cancel: look for buttons at the bottom of [role="dialog"]. Confirm is usually the primary/filled button.
 - Form wizards: if a page has numbered steps (Step 1, 2, 3...), use "Next" or step number buttons to navigate between them
 - Dropdowns/selects: click to open, then click an option
+- TABS: If the PR adds tabs that switch content, click through ALL tabs to show each one renders different content. Take a screenshot of each tab. This is critical — reviewers need to see every tab works.
+- Sidebar/navigation: If a new page is added via sidebar nav, click the nav link to navigate there, then demonstrate the page features
 
 SCROLLING RULES:
 - NEVER scroll before clicking an element — Playwright auto-scrolls to elements when clicking
@@ -78,7 +80,7 @@ AVOID:
 - Don't test error states — show the happy path only
 - Don't interact with unchanged UI
 - Don't add login steps unless app hints say to
-- Don't exceed 20 steps total
+- Don't exceed 30 steps total
 - Don't use fragile CSS selectors — always prefer text= or role= or data-testid
 - Don't fill in unrelated form fields unless needed to reach the changed UI`;
 
