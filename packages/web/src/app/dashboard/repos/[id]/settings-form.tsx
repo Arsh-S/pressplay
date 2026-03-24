@@ -46,7 +46,7 @@ export function SettingsForm({ repoId, settings }: Props) {
           value={previewPattern}
           onChange={e => setPreviewPattern(e.target.value)}
           placeholder="https://deploy-preview-{pr}--myapp.netlify.app"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm text-zinc-50 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm text-zinc-50 placeholder:text-zinc-600 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none transition-colors"
         />
         <p className="text-[11px] text-zinc-600 mt-1.5">Use {'{pr}'} as placeholder for the PR number</p>
       </div>
@@ -58,7 +58,7 @@ export function SettingsForm({ repoId, settings }: Props) {
         <select
           value={provider}
           onChange={e => setProvider(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm text-zinc-50 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none"
+          className="w-full appearance-none bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm text-zinc-50 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none transition-colors"
         >
           <option value="anthropic">Anthropic (Claude)</option>
           <option value="openai">OpenAI (GPT-4o)</option>
@@ -80,7 +80,7 @@ export function SettingsForm({ repoId, settings }: Props) {
       <button
         type="submit"
         disabled={saving}
-        className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+        className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
       >
         {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
       </button>

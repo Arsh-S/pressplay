@@ -53,7 +53,7 @@ export async function Header() {
           </>
         ) : (
           <form action={async () => { 'use server'; await signIn('github', { redirectTo: '/dashboard' }); }}>
-            <button className="rounded-lg bg-indigo-500 px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+            <button className="rounded-lg bg-indigo-500 px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-indigo-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
               Sign in with GitHub
             </button>
           </form>

@@ -27,13 +27,13 @@ export default function Home() {
         <div className="relative flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/dashboard"
-            className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+            className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
           >
             Get Started
           </Link>
           <a
             href="#demo"
-            className="border border-zinc-800 text-zinc-400 hover:text-zinc-300 rounded-lg px-6 py-2.5 text-sm transition-colors"
+            className="border border-zinc-800 text-zinc-400 hover:text-zinc-300 hover:border-zinc-700 rounded-lg px-6 py-2.5 text-sm transition-colors"
           >
             View Demo
           </a>
@@ -162,7 +162,7 @@ export default function Home() {
         </p>
         <Link
           href="/dashboard"
-          className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+          className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-6 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
         >
           Get Started
         </Link>

@@ -34,7 +34,7 @@ export default async function DashboardPage() {
       href={`https://github.com/apps/${process.env.GITHUB_APP_SLUG || 'pressplay'}/installations/new`}
       target="_blank"
       rel="noopener noreferrer"
-      className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2 text-sm font-medium"
+      className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
     >
       Install on Repository
     </a>
