@@ -1,10 +1,20 @@
-# 🎬 PRessPlay
+<p align="center">
+  <img src="public/images/PRessPlay_logo_transparent.png" alt="PRessPlay" width="400" />
+</p>
 
-**Auto-generated demo videos for every pull request.**
+<p align="center">
+  <strong>Auto-generated demo videos for every pull request.</strong>
+</p>
 
-PRessPlay reads your PR diff, generates a Playwright interaction script via AI, records a browser walkthrough against your preview deployment, and posts the video directly on your PR.
+<p align="center">
+  PRessPlay reads your PR diff, generates a Playwright interaction script via AI, records a browser walkthrough against your preview deployment, and posts the video directly on your PR.
+</p>
 
-Your reviewers see the feature. Not just the diff.
+<p align="center">
+  Your reviewers see the feature. Not just the diff.
+</p>
+
+---
 
 ## Quick Start
 
@@ -41,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: yourorg/pressplay@v1
+      - uses: Arsh-S/pressplay@main
         with:
           preview-url: ${{ github.event.deployment_status.target_url }}
           llm-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -62,10 +72,11 @@ ANTHROPIC_API_KEY=sk-... npx @pressplay/cli http://localhost:3000
 ## How It Works
 
 1. **Diff Analysis** — Reads `git diff`, filters to frontend files, maps to routes
-2. **Script Generation** — LLM reads the diff and generates Playwright interaction steps
-3. **Recording** — Playwright executes the script against your preview URL, records video
-4. **Conversion** — FFmpeg converts to MP4 + GIF
-5. **Publishing** — Posts GIF preview + MP4 link as a PR comment
+2. **DOM Inspection** — Navigates to the preview URL and captures all interactive elements with real selectors
+3. **Script Generation** — LLM reads the diff + DOM snapshot and generates Playwright interaction steps
+4. **Adaptive Recording** — Executes steps with a visible cursor; re-plans on failure using live DOM context
+5. **Conversion** — FFmpeg converts to MP4 + GIF at 1080p
+6. **Publishing** — Posts demo video as a PR comment
 
 ## Configuration
 
