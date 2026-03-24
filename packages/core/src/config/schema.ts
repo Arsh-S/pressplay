@@ -18,8 +18,8 @@ const llmSchema = z.object({
 }).default({});
 
 const viewportSchema = z.object({
-  width: z.number().int().positive().default(1280),
-  height: z.number().int().positive().default(720),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
 }).default({});
 
 const recordingSchema = z.object({

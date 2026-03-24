@@ -15,7 +15,8 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.0",
-    "@octokit/app": "^16.1.2",
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^21.0.0",
     "@pressplay/core": "workspace:*",
     "better-sqlite3": "^11.8.0",
     "drizzle-orm": "^0.39.0",
@@ -30,8 +31,8 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "drizzle-kit": "^0.30.0",
-    "tsx": "^4.19.0",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
