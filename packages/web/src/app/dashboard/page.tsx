@@ -1,8 +1,21 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { installations, repos, jobs } from '@/lib/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/status-badge';
+
+function timeAgo(date: Date | null): string {
+  if (!date) return '';
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -11,49 +24,91 @@ export default async function DashboardPage() {
 
   const repoList = await db.select().from(repos).orderBy(repos.fullName);
 
-  const recentJobs = await db.select().from(jobs).orderBy(desc(jobs.createdAt)).limit(10);
+  const recentJobs = await db
+    .select({
+      id: jobs.id,
+      prNumber: jobs.prNumber,
+      prTitle: jobs.prTitle,
+      status: jobs.status,
+      durationMs: jobs.durationMs,
+      createdAt: jobs.createdAt,
+      error: jobs.error,
+      repoId: jobs.repoId,
+      repoFullName: repos.fullName,
+    })
+    .from(jobs)
+    .innerJoin(repos, eq(jobs.repoId, repos.id))
+    .orderBy(desc(jobs.createdAt))
+    .limit(10);
+
+  const installButton = (
+    <a
+      href={`https://github.com/apps/${process.env.GITHUB_APP_SLUG || 'pressplay'}/installations/new`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2 text-sm font-medium"
+    >
+      Install on Repository
+    </a>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <a
-          href={`https://github.com/apps/${process.env.GITHUB_APP_SLUG || 'pressplay'}/installations/new`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-black text-white text-sm px-4 py-2 rounded hover:bg-gray-800"
-        >
-          Install on Repository
-        </a>
+    <div className="space-y-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Repositories</h1>
+          <p className="text-zinc-500 mt-1">Manage your connected repositories and video generation.</p>
+        </div>
+        {installButton}
       </div>
 
       {allInstallations.length === 0 ? (
-        <div className="border rounded-lg p-8 text-center text-gray-400">
-          <p className="text-lg mb-2">No repositories connected yet.</p>
-          <p className="text-sm">Click &quot;Install on Repository&quot; to add the PRessPlay GitHub App to your repos.</p>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
+          <p className="text-zinc-400 text-lg mb-4">No repositories connected yet.</p>
+          {installButton}
         </div>
       ) : (
-        <div className="space-y-6">
+        <>
           <section>
-            <h2 className="text-lg font-semibold mb-3">Repositories</h2>
-            <div className="border rounded-lg divide-y">
+            <div className="space-y-3">
               {repoList.map(repo => {
                 const repoJobs = recentJobs.filter(j => j.repoId === repo.id);
+                const completedCount = repoJobs.filter(j => j.status === 'completed').length;
+                const pendingCount = repoJobs.filter(j => j.status === 'pending' || j.status === 'running').length;
                 const latestJob = repoJobs[0];
+                const lastRunText = latestJob
+                  ? `Last run ${timeAgo(latestJob.createdAt ? new Date(latestJob.createdAt as unknown as string) : null)} · ${completedCount} video${completedCount !== 1 ? 's' : ''} generated`
+                  : 'No runs yet';
+
                 return (
-                  <Link key={repo.id} href={`/dashboard/repos/${repo.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50 transition">
-                    <div>
-                      <p className="font-medium">{repo.fullName}</p>
-                      <p className="text-sm text-gray-500">
-                        {latestJob ? `Last run: PR #${latestJob.prNumber} — ${latestJob.status}` : 'No runs yet'}
-                      </p>
+                  <Link
+                    key={repo.id}
+                    href={`/dashboard/repos/${repo.id}`}
+                    className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-zinc-800 rounded-lg p-2 text-lg">📦</div>
+                      <div>
+                        <p className="font-medium text-zinc-50">{repo.fullName}</p>
+                        <p className="text-sm text-zinc-600">{lastRunText}</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {repo.active ? (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Active</span>
-                      ) : (
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">Paused</span>
+                      {pendingCount > 0 && (
+                        <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-400/15 text-indigo-400">
+                          {pendingCount} pending
+                        </span>
                       )}
+                      {repo.active ? (
+                        <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-400/15 text-green-400">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-400/15 text-zinc-400">
+                          Paused
+                        </span>
+                      )}
+                      <span className="text-zinc-600">→</span>
                     </div>
                   </Link>
                 );
@@ -63,32 +118,34 @@ export default async function DashboardPage() {
 
           {recentJobs.length > 0 && (
             <section>
-              <h2 className="text-lg font-semibold mb-3">Recent Jobs</h2>
-              <div className="border rounded-lg divide-y">
+              <h2 className="text-lg font-semibold text-zinc-50 mb-3">Recent Activity</h2>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
                 {recentJobs.map(job => (
                   <div key={job.id} className="flex items-center justify-between p-4">
-                    <div>
-                      <p className="font-medium">PR #{job.prNumber} {job.prTitle && `— ${job.prTitle}`}</p>
-                      <p className="text-sm text-gray-500">{job.createdAt ? new Date(job.createdAt as unknown as string).toLocaleString() : ''}</p>
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={job.status} />
+                      <div>
+                        <p className="font-medium text-zinc-50">{job.prTitle || `PR #${job.prNumber}`}</p>
+                        <p className="text-sm text-zinc-600">
+                          <span className="font-mono">#{job.prNumber}</span>
+                          {' · '}
+                          <span>{job.repoFullName}</span>
+                        </p>
+                      </div>
                     </div>
-                    <StatusBadge status={job.status} />
+                    <div className="flex items-center gap-3 text-sm text-zinc-600">
+                      {job.durationMs != null && (
+                        <span>{(job.durationMs / 1000).toFixed(1)}s</span>
+                      )}
+                      <span>{timeAgo(job.createdAt ? new Date(job.createdAt as unknown as string) : null)}</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
           )}
-        </div>
+        </>
       )}
     </div>
   );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    running: 'bg-blue-100 text-blue-700',
-    completed: 'bg-green-100 text-green-700',
-    failed: 'bg-red-100 text-red-700',
-  };
-  return <span className={`text-xs px-2 py-1 rounded ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
 }
