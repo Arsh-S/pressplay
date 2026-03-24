@@ -10,26 +10,29 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "test": "vitest run"
+    "test": "vitest run",
+    "worker": "tsx scripts/worker.ts"
   },
   "dependencies": {
-    "next": "^15.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "next-auth": "^5.0.0-beta.25",
     "@auth/drizzle-adapter": "^1.7.0",
-    "drizzle-orm": "^0.39.0",
+    "@octokit/app": "^16.1.2",
+    "@pressplay/core": "workspace:*",
     "better-sqlite3": "^11.8.0",
-    "@pressplay/core": "workspace:*"
+    "drizzle-orm": "^0.39.0",
+    "next": "^15.5.0",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/better-sqlite3": "^7.6.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "typescript": "^5.7.0",
-    "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
     "drizzle-kit": "^0.30.0",
+    "tsx": "^4.19.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
 }

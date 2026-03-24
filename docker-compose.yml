@@ -1,0 +1,32 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3100:3000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=file:/app/data/pressplay.db
+      - NODE_ENV=production
+    volumes:
+      - pressplay-data:/app/data
+      - pressplay-videos:/app/videos
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["pnpm", "--filter", "@pressplay/web", "worker"]
+    env_file: .env
+    environment:
+      - DATABASE_URL=file:/app/data/pressplay.db
+      - WORK_DIR=/app/videos
+      - NODE_ENV=production
+    volumes:
+      - pressplay-data:/app/data
+      - pressplay-videos:/app/videos
+    restart: unless-stopped
+    depends_on:
+      - web
+
+volumes:
+  pressplay-data:
+  pressplay-videos:
