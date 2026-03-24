@@ -7,9 +7,9 @@ export function Logo() {
       <Image
         src="/images/PRessPlay_logo_transparent.png"
         alt="PRessPlay"
-        width={140}
-        height={40}
-        className="brightness-0 invert"
+        width={180}
+        height={50}
+        className="h-9 w-auto"
         priority
       />
     </Link>
