@@ -246,7 +246,7 @@ async function postPRComment(
 
   const lines = [
     marker,
-    `<a href="https://github.com/Arsh-S/pressplay"><img src="${logoUrl}" alt="PRessPlay" height="40" /></a>`,
+    `<a href="https://github.com/Arsh-S/pressplay"><img src="${logoUrl}" alt="PRessPlay" height="80" /></a>`,
     '',
     `### Demo — PR #${job.prNumber}`,
     '',
