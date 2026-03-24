@@ -17,8 +17,13 @@ auth.json
 .DS_Store
 *.log
 
+# Playwright
+e2e/test-results/
+e2e/screenshots/
+
 # Web app
 .next/
 *.db
 *.db-wal
 *.db-shm
+*.pem
