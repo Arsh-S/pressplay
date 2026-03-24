@@ -8,7 +8,7 @@ Redesign the PRessPlay web app from a minimal prototype into a polished, develop
 
 - **Personality:** Developer-focused & technical — dark, precise, premium
 - **Color palette:** Indigo (#6366f1) / Violet (#8b5cf6) accents on deep zinc backgrounds (#09090b, #18181b, #27272a)
-- **Typography:** Inter Variable (primary), JetBrains Mono (code/monospace accents) — loaded via Google Fonts
+- **Typography:** Inter Variable (primary), JetBrains Mono (code/monospace accents) — loaded via `next/font/google`
 - **Layout:** Top nav only (Vercel/Resend style), no sidebar. Full-width content.
 - **Landing page copy:** Problem-focused — "Stop writing PR descriptions nobody reads"
 - **Component source:** 21st.dev for finding high-quality Tailwind component patterns
@@ -34,11 +34,13 @@ Redesign the PRessPlay web app from a minimal prototype into a polished, develop
 2. **Repo cards** — List of connected repos, each card shows: repo icon, full name, last run time, video count, pending job count (indigo pill), active/paused status (green/gray pill), arrow indicator for navigation
 3. **Recent Activity** — Table-style list of recent jobs across all repos: status badge (DONE/REC/FAIL/PENDING), branch name, PR number (monospace), repo name, duration, relative timestamp
 
-**Status badge system:**
-- PENDING: Yellow bg (15% opacity), yellow text
-- REC (recording): Indigo bg (15% opacity), indigo text
-- DONE: Green bg (15% opacity), green text
-- FAIL: Red bg (15% opacity), red text
+**Status badge system** (maps from DB values to display labels):
+- `pending` → "PENDING": Yellow bg (15% opacity), yellow text
+- `running` → "REC": Indigo bg (15% opacity), indigo text
+- `completed` → "DONE": Green bg (15% opacity), green text
+- `failed` → "FAIL": Red bg (15% opacity), red text
+
+**Failed jobs:** Show error message in a muted text line below the job row when `job.error` is present.
 
 ### 3. Repo Detail (`/dashboard/repos/[id]`)
 
@@ -76,16 +78,18 @@ Error:          #f87171 / rgba(239,68,68,0.15)
 ```
 
 ### Typography
-- **Headings:** Inter Variable, 600-700 weight, tight letter-spacing (-0.02em to -0.03em)
+- **H1 (page title):** 28px (text-2xl/3xl), 700 weight, -0.03em tracking
+- **H2 (section title):** 20px (text-xl), 600 weight, -0.02em tracking
+- **H3 (card/subsection):** 16px (text-base), 600 weight, -0.01em tracking
 - **Body:** Inter Variable, 400 weight, 13-14px
 - **Labels:** 11px, uppercase, 0.05-0.1em letter-spacing, zinc-500
 - **Monospace:** JetBrains Mono — PR numbers, commit SHAs, terminal content, usernames, code snippets
 
 ### Component Patterns
 - **Cards:** `bg-zinc-900 border border-zinc-800 rounded-xl p-4-5`
-- **Inputs:** `bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm`
-- **Buttons (primary):** `bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2.5 text-sm font-medium`
-- **Buttons (secondary):** `bg-transparent border border-zinc-800 text-zinc-400 rounded-lg`
+- **Inputs:** `bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/50 focus:outline-none`
+- **Buttons (primary):** `bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/50 focus:outline-none`
+- **Buttons (secondary):** `bg-transparent border border-zinc-800 text-zinc-400 rounded-lg focus:ring-2 focus:ring-zinc-600 focus:outline-none`
 - **Pills/badges:** `rounded-full px-2.5 py-0.5 text-xs font-semibold` with status-specific bg/text colors
 - **Tables:** Card container with `divide-y divide-zinc-800/50` rows
 
@@ -98,8 +102,9 @@ Error:          #f87171 / rgba(239,68,68,0.15)
 ## Technical Implementation
 
 ### Fonts
-- Load Inter Variable and JetBrains Mono via `<link>` from Google Fonts in `layout.tsx`
-- Set as CSS variables / Tailwind font-family config
+- Load Inter and JetBrains Mono via `next/font/google` in `layout.tsx` (auto self-hosted, no FOUT)
+- Apply as CSS variables (`--font-inter`, `--font-jetbrains`) on `<html>` element
+- Reference in Tailwind via `@theme` block: `--font-sans: var(--font-inter)`, `--font-mono: var(--font-jetbrains)`
 
 ### 21st.dev
 - Use as reference for high-quality component patterns (buttons, inputs, cards, badges)
@@ -107,7 +112,17 @@ Error:          #f87171 / rgba(239,68,68,0.15)
 
 ### Tailwind v4
 - Already using Tailwind CSS 4.0 with `@tailwindcss/postcss`
-- Extend with custom colors via CSS variables in `globals.css` using `@theme`
+- Extend with custom colors and fonts via `@theme` block in `globals.css`:
+  ```css
+  @theme {
+    --font-sans: var(--font-inter);
+    --font-mono: var(--font-jetbrains);
+    --color-surface: #18181b;
+    --color-accent: #6366f1;
+    --color-accent-hover: #8b5cf6;
+    --color-accent-muted: rgba(99,102,241,0.15);
+  }
+  ```
 - Dark mode is the only mode (no light mode toggle needed)
 
 ### Files to Change
@@ -121,7 +136,25 @@ Error:          #f87171 / rgba(239,68,68,0.15)
 8. `dashboard/repos/[id]/settings-form.tsx` — Dark-themed form with sections
 
 ### New Files
-- None required — all changes are to existing files. Shared component patterns (StatusBadge) can stay inline since they're small.
+1. `components/status-badge.tsx` — Shared StatusBadge component (extracted from duplicated inline versions)
+2. `components/logo.tsx` — Shared logo component (gradient ▶ icon + text)
+
+### Data Layer Changes
+- Dashboard query: JOIN jobs with repos to get repo name per job row in Recent Activity
+- Dashboard: Add aggregate counts (total videos, pending jobs) per repo — simple COUNT queries
+- Auth: Extend NextAuth GitHub provider callback to store `profile.login` (GitHub username) in user record. Display this instead of email in header.
+
+### Navigation Notes
+- "Dashboard" and repo links: use `next/link` (client-side navigation)
+- "Docs", "GitHub", "Twitter" in footer: use `<a>` with `target="_blank" rel="noopener"`
+- "View Demo" CTA on landing page: scrolls to the terminal mockup section (`#demo`)
+
+### Empty States
+- Dashboard (no repos): "No repositories connected yet" with Install button
+- Repo detail (no jobs): "No videos generated yet. Open a pull request to get started."
+
+### Tabs Implementation
+- Use URL search params (`?tab=jobs` / `?tab=settings`) for tab state — keeps pages as server components, supports direct linking and back/forward navigation.
 
 ## Testing
 
